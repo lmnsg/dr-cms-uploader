@@ -1,23 +1,25 @@
 const request = require('request')
 const fs = require('fs')
 const { startSpinner } = require('./util')
+const chalk = require('chalk')
 
 /**
  * upload zip to CMS
  * @param file { String }
  * @param url { String }
  * @param cmsParams { name<String>, description<String>, directory<String> }
- * @param auth  { user<String>, pass<String>}
+ * @param auth { user<String>, pass<String> }
  */
-module.exports = (file, { url, cmsParams, auth }) => {
+module.exports = (file, { url, cmsParams }, auth) => {
   if (!file) return console.error('not found file.', file)
   if (!url) return console.error('invalid url.', url)
 
   const formData = Object.assign({
-    description: 'cms'
+    forcePush: 'true',
+    description: 'upload by DrCmsUploader'
   }, cmsParams)
 
-  let spinner = startSpinner('\x1b[32m load zip file from' + file)
+  let spinner = startSpinner(`load zip file from ${file}`)
   return new Promise((resolve, reject) => {
     fs.readFile(file, function (err, buffer) {
       if (err) throw err
@@ -31,8 +33,7 @@ module.exports = (file, { url, cmsParams, auth }) => {
       }
 
       spinner.stop()
-      spinner = startSpinner(`\x1b[32m upload zip file to ${url}`)
-
+      spinner = startSpinner(`upload zip file to ${url}`)
       request.put({
         url,
         auth,
@@ -46,16 +47,33 @@ module.exports = (file, { url, cmsParams, auth }) => {
         }
       }, (err, response, body) => {
         spinner.stop()
+        if (err) throw err
 
-        if (err) {
-          reject(err)
-          return console.error(err)
-        } else {
-          console.log('\x1b[32m CMS response %d %s', response.statusCode, response.statusMessage)
-          console.log('\x1b[32m CMS response Headers: %s', JSON.stringify(response.rawHeaders, null, '  '))
-          console.log('\x1b[32m body:', body)
-          resolve()
+        let { result, errors } = JSON.parse(body)
+        console.log(chalk.cyan('name: ' + formData.name + ', directory: ' + formData.directory))
+
+        if (result === 'success') {
+          return resolve(console.log(chalk.green('upload success!')))
         }
+
+        errors = [].concat.apply([], errors)
+
+        console.log(
+          chalk.red(
+            errors
+              .filter((error, i) => {
+                if (typeof error !== 'object') return true
+                const targets = error.targets
+                if (targets) {
+                  const res = errors[i].targets = targets.filter(({ isForbidden }) => isForbidden)
+                  return res.length
+                }
+              })
+              .map(error => typeof error === 'string' ? error : JSON.stringify(error))
+              .join('\n')
+          )
+        )
+        return reject(result)
       })
     })
   })

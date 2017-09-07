@@ -3,7 +3,7 @@
 ## Usage
 
 ```bash
-sudo npm i dr-cms-upload -g
+sudo npm i @dr/cms-uploader -g
 
 # demo
 cms -d 
@@ -14,39 +14,38 @@ cms -p
 # demo & production
 cms -dp
 
-# stay zip file
-cms -ds
 ```
 
-## Notify
+## Config
 
-dr-cms-upload 需要读取项目的 cms 信息才能够运行, 在你的项目目录下  
-放置一个如下的 cms.yml 文件:
+dr-cms-upload 只需要下面一个配置项在你的 package.json 中即可,
 
-````yaml
-# cms.yml
-path: ./src 
- 
-cmsParams:
-  name: cashloan-lp
-  description: cashloan landing page
-  directory: cashloan/lp
-  forcePush: 'true'
-````
-path 是相对路径,指向你要打包的文件夹
-name 是 cms 上显示的名称
-directory 是访问路径
+```json
+{
+  "name": "",
+  "version": ""
+}
+```
+* name-version 将默认作为 cms 中的 name, name/version 作为 directory
+* 默认将会上传 dist 文件夹内的所有文件  
 
-## Auth
-cms 的上传接口需要使用 cms 账号通过 base auth 进行验证,  
-dr-cms-upload 默认会使用你的用户根目录下的 .cmsrc 的配置
+![](http://o9zfwqxxz.bkt.clouddn.com/package.jpg)  
+如这样的一个配置,在 cms 中的配置如下:
+![](http://o9zfwqxxz.bkt.clouddn.com/example.jpg)  
 
+如果你需要自定义 dist, name, directory 或者 description 你可以在像下面这样任意覆盖它们
 ````json
 {
-    "user": "",
-    "pass": ""
+  "name": "",
+  "description": "",
+  "cms": {
+    "name": "",
+    "dist": "",
+    "directory": ""
+  }
 }
 ````
+
 
 
 
