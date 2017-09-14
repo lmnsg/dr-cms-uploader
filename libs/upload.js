@@ -21,7 +21,7 @@ module.exports = (file, { url, cmsParams }, auth) => {
 
   let spinner = startSpinner(`load zip file from ${file}`)
   return new Promise((resolve, reject) => {
-    fs.readFile(file, function (err, buffer) {
+    fs.readFile(file, function(err, buffer) {
       if (err) throw err
 
       formData.file = {
@@ -56,20 +56,15 @@ module.exports = (file, { url, cmsParams }, auth) => {
           return resolve(console.log(chalk.green('upload success!')))
         }
 
-        errors = [].concat.apply([], errors)
-
         console.log(
           chalk.red(
             errors
-              .filter((error, i) => {
-                if (typeof error !== 'object') return true
-                const targets = error.targets
-                if (targets) {
-                  const res = errors[i].targets = targets.filter(({ isForbidden }) => isForbidden)
-                  return res.length
+              .map(error => {
+                if (typeof error === 'string') return error
+                if (error.forbidden) {
+                  return JSON.stringify(error.forbidden).replace(/,{/g, '\n{')
                 }
               })
-              .map(error => typeof error === 'string' ? error : JSON.stringify(error))
               .join('\n')
           )
         )
